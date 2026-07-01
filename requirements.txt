@@ -26,4 +26,4 @@ gevent
 Flask-Talisman
 Flask-Limiter
 pytest
-flake8gunicorn==20.1.0
+gunicorn==20.1.0
