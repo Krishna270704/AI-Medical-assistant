@@ -14,8 +14,10 @@ login_manager.login_view = 'auth.login'
 login_manager.login_message_category = 'info'
 
 def setup_logging():
-    if not os.path.exists('data/logs'):
-        os.makedirs('data/logs', exist_ok=True)
+    os.makedirs('data/logs', exist_ok=True)
+    os.makedirs('data/uploads', exist_ok=True)
+    os.makedirs('data/audio', exist_ok=True)
+    os.makedirs('database', exist_ok=True)
     logging.basicConfig(
         level=logging.INFO,
         format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',

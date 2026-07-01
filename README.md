@@ -392,3 +392,12 @@ https://github.com/Krishna270704/AI-Medical-assistant.git
 ---
 
 ## 🌟 If you found this project useful, don't forget to give it a Star on GitHub
+
+## Deployment to Railway
+
+1. Push this code to a GitHub repository.
+2. Create a new project on [Railway](https://railway.app/).
+3. Select **Deploy from GitHub repo** and choose your repository.
+4. Add all the environment variables listed in .env.example in the Railway dashboard.
+5. Railway will automatically detect the Procfile and use Gunicorn to serve the app.
+6. The PORT will be automatically injected by Railway.

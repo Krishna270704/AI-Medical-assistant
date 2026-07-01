@@ -89,6 +89,10 @@ def index():
         return redirect(url_for('dashboard.index'))
     return render_template('auth/landing.html')
 
+@main_bp.route('/health', methods=['GET'])
+def health_check():
+    return jsonify({"status": "ok"}), 200
+
 @main_bp.route('/chat/<int:session_id>', methods=['GET'])
 @login_required
 def chat_view(session_id):
