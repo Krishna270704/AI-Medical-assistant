@@ -18,6 +18,7 @@ class Config:
     # Security
     SESSION_COOKIE_HTTPONLY = True
     SESSION_COOKIE_SECURE = os.getenv("FLASK_ENV") == "production"
+    REMEMBER_COOKIE_SECURE = os.getenv("FLASK_ENV") == "production"
 
 class DevelopmentConfig(Config):
     """Development configuration."""

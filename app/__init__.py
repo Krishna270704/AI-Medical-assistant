@@ -70,9 +70,12 @@ def create_app(config_class=Config):
         ],
         'media-src': ['\'self\'', 'blob:']
     }
-    # Talisman handles security headers (HSTS, CSP, X-Frame-Options)
-    # We turn off force_https for local development. Railway terminates SSL for us.
-    Talisman(app, content_security_policy=csp, force_https=app.config.get('SESSION_COOKIE_SECURE', False))
+    # Detect Railway environment
+    is_railway = bool(os.environ.get('RAILWAY_ENVIRONMENT') or os.environ.get('RAILWAY_PROJECT_ID'))
+    # Force HTTPS only if secure cookies are enabled AND we are not on Railway
+    force_https = app.config.get('SESSION_COOKIE_SECURE', False) and not is_railway
+    
+    Talisman(app, content_security_policy=csp, force_https=force_https)
     
     @login_manager.user_loader
     def load_user(user_id):
