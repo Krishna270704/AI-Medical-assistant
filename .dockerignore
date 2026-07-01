@@ -1,0 +1,13 @@
+venv/
+.venv/
+__pycache__/
+*.pyc
+.env
+.git/
+.github/
+data/medical_assistant.db
+data/uploads/*
+data/audio/*
+data/faiss_index/*
+tests/
+.pytest_cache/

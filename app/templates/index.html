@@ -1,0 +1,380 @@
+{% extends "layout.html" %}
+{% block title %}Medical AI Assistant{% endblock %}
+
+{% block content %}
+<div style="display: flex; gap: 20px; align-items: flex-start;">
+    <!-- Main Chat Column -->
+    <div style="flex: 2;">
+        <div class="glass-panel" style="margin-bottom: 20px;">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
+                <h2 style="font-size: 1.5rem; display: flex; align-items: center; gap: 10px;">
+                    <span style="font-size: 1.8rem;">🤖</span> AI Medical Advisor
+                </h2>
+                {% if current_chat %}
+                <span style="font-size: 0.9rem; color: #9ca3af;">{{ current_chat.title }}</span>
+                {% endif %}
+            </div>
+
+    <style>
+      .spinner { border: 4px solid rgba(255,255,255,0.3); border-radius: 50%; border-top: 4px solid #fff; width: 30px; height: 30px; animation: spin 1s linear infinite; margin: 0 auto; }
+      @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+      .badge { padding: 4px 8px; border-radius: 12px; font-size: 0.75rem; font-weight: bold; color: white; display: inline-block; }
+      .risk-normal, .value-normal { background-color: #10b981; }
+      .risk-attention, .value-low { background-color: #f59e0b; }
+      .risk-consult, .value-high { background-color: #f97316; }
+      .risk-emergency { background-color: #ef4444; }
+    </style>
+
+    <!-- Upload Zone -->
+    <div class="upload-section glass-panel" style="margin-bottom: 30px; text-align: center; border: 2px dashed rgba(255, 255, 255, 0.4); padding: 20px; border-radius: 15px;">
+        <h3>Upload Medical Report</h3>
+        <p style="font-size: 0.9rem; color: #e5e7eb; margin-bottom: 15px;">PDF, JPG, PNG supported</p>
+        <input type="file" id="report_upload" style="display: none;" accept=".pdf,.png,.jpg,.jpeg">
+        <label for="report_upload" class="btn-primary" style="display: inline-block; cursor: pointer;">Select File</label>
+        
+        <div id="upload_progress" style="display: none; margin-top: 15px;">
+            <div class="spinner"></div>
+            <p style="margin-top: 10px; font-weight: bold;">Extracting Text & Analyzing Report...</p>
+        </div>
+    </div>
+
+    <!-- Report Analysis Dashboard -->
+    <div id="report_analysis_dashboard" style="display: none; margin-bottom: 30px;">
+        <h2 style="margin-bottom: 15px;">Report Analysis</h2>
+        
+        <div class="dashboard-grid" style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px;">
+            <div class="glass-panel card" style="padding: 15px;">
+                <h4 style="display: flex; justify-content: space-between;">Urgency Level <span id="urgency_badge" class="badge"></span></h4>
+                <strong style="margin-top: 10px; display: block;">Summary:</strong>
+                <p id="report_summary" style="font-size: 0.9rem; margin-top: 5px; line-height: 1.4;"></p>
+            </div>
+            
+            <div class="glass-panel card" style="padding: 15px;">
+                <h4>Key Findings</h4>
+                <ul id="key_findings_list" style="font-size: 0.9rem; margin-top: 10px; padding-left: 20px; line-height: 1.4;"></ul>
+            </div>
+            
+            <div class="glass-panel card" style="padding: 15px;">
+                <h4>Abnormal Values</h4>
+                <div id="abnormal_values_container" style="margin-top: 10px; font-size: 0.9rem; line-height: 1.6;"></div>
+            </div>
+
+            <div class="glass-panel card" style="padding: 15px;">
+                <h4>Recommendations</h4>
+                <ul id="recommendations_list" style="font-size: 0.9rem; margin-top: 10px; padding-left: 20px; line-height: 1.4;"></ul>
+            </div>
+        </div>
+        <div class="glass-panel card" style="padding: 15px; margin-top: 15px;">
+            <h4>Medical Terms Explained</h4>
+            <div id="terms_explained_container" style="font-size: 0.9rem; margin-top: 10px; line-height: 1.4;"></div>
+        </div>
+    </div>
+
+    {% if error %}
+    <div class="alert alert-error">
+      {{ error }}
+    </div>
+    {% endif %}
+
+    {% if history %}
+    <section class="response-section" id="chat_history">
+      {% for msg in history %}
+        {% if msg.type == 'human' %}
+        <div class="query-bubble fade-in">
+          <strong>You:</strong>
+          <p>{{ msg.content }}</p>
+        </div>
+        {% elif msg.type == 'ai' %}
+        <div class="response-bubble fade-in">
+          <h2>Medical Response</h2>
+          <div class="response-content">
+            {{ msg.content }}
+          </div>
+          {% if loop.last and latest_sources %}
+          <div class="sources" style="margin-top: 15px; font-size: 0.85rem; color: #6b7280; padding-top: 10px; border-top: 1px dashed #e5e7eb;">
+            <strong>Context Sources:</strong>
+            <ul style="margin-top: 5px; padding-left: 20px;">
+              {% for source in latest_sources %}
+                <li>{{ source.source }} {% if source.page %}(Page {{ source.page }}){% endif %}</li>
+              {% endfor %}
+            </ul>
+          </div>
+          {% endif %}
+        </div>
+        {% endif %}
+      {% endfor %}
+    </section>
+    {% else %}
+    <section class="response-section" id="chat_history"></section>
+    {% endif %}
+
+    <form id="chat_form" class="query-form" style="margin-top: 30px;">
+      <div class="form-group" style="position: relative;">
+        <label for="user_input">Enter Your Medical Query:</label>
+        <textarea id="user_input" name="user_input" rows="4" placeholder="Describe your symptoms, condition, or medical question..."></textarea>
+        <button type="button" id="mic_btn" style="position: absolute; right: 10px; bottom: 15px; border: none; background: #f3f4f6; border-radius: 50%; width: 40px; height: 40px; cursor: pointer; font-size: 1.2rem; display: flex; justify-content: center; align-items: center; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">🎤</button>
+      </div>
+      <div style="display: flex; gap: 15px; align-items: center;">
+        <button type="submit" class="btn-primary" id="submit_btn">
+          <span>Get Advice</span>
+          <svg xmlns="http://www.w3.org/polygons" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon"><line x1="5" y1="12" x2="19" y2="12"></line><polyline points="12 5 19 12 12 19"></polyline></svg>
+        </button>
+        <span id="chat_status" style="font-size: 0.9rem; font-weight: bold; color: #3b82f6;"></span>
+      </div>
+    </form>
+
+
+    <footer>
+      <p>&copy; 2026 AI Medical Advisor. For informational purposes only.</p>
+    </footer>
+  </div>
+
+{% endblock %}
+
+{% block scripts %}
+<script>
+    document.getElementById('report_upload').addEventListener('change', function(e) {
+        if(e.target.files.length === 0) return;
+        
+        const file = e.target.files[0];
+        const formData = new FormData();
+        formData.append('file', file);
+        {% if current_chat %}
+        formData.append('session_id', '{{ current_chat.id }}');
+        {% endif %}
+        
+        document.getElementById('upload_progress').style.display = 'block';
+        document.getElementById('report_analysis_dashboard').style.display = 'none';
+        
+        fetch('/upload_report', {
+            method: 'POST',
+            body: formData
+        })
+        .then(response => response.json())
+        .then(data => {
+            document.getElementById('upload_progress').style.display = 'none';
+            if (data.error) {
+                alert("Error: " + data.error);
+                return;
+            }
+            
+            // Populate dashboard
+            document.getElementById('urgency_badge').innerText = data.urgency_level;
+            document.getElementById('urgency_badge').className = "badge " + data.risk_color;
+            
+            document.getElementById('report_summary').innerText = data.summary;
+            
+            const findingsList = document.getElementById('key_findings_list');
+            findingsList.innerHTML = '';
+            (data.key_findings || []).forEach(finding => {
+                let li = document.createElement('li');
+                li.innerText = finding;
+                findingsList.appendChild(li);
+            });
+            
+            const abnormalContainer = document.getElementById('abnormal_values_container');
+            abnormalContainer.innerHTML = '';
+            if (data.abnormal_values && data.abnormal_values.length > 0) {
+                data.abnormal_values.forEach(ab => {
+                    let div = document.createElement('div');
+                    div.style.marginBottom = '5px';
+                    div.innerHTML = `<strong>${ab.name}:</strong> ${ab.value} <span class="badge ${ab.color}">${ab.status}</span>`;
+                    abnormalContainer.appendChild(div);
+                });
+            } else {
+                abnormalContainer.innerHTML = '<em>None detected.</em>';
+            }
+            
+            const recList = document.getElementById('recommendations_list');
+            recList.innerHTML = '';
+            (data.lifestyle_recommendations || []).forEach(rec => {
+                let li = document.createElement('li');
+                li.innerText = rec;
+                recList.appendChild(li);
+            });
+            
+            const termsContainer = document.getElementById('terms_explained_container');
+            termsContainer.innerHTML = '';
+            if (data.medical_terms_explained) {
+                for (const [term, explanation] of Object.entries(data.medical_terms_explained)) {
+                    let p = document.createElement('p');
+                    p.innerHTML = `<strong>${term}:</strong> ${explanation}`;
+                    termsContainer.appendChild(p);
+                }
+            }
+            
+            document.getElementById('report_analysis_dashboard').style.display = 'block';
+        })
+        .catch(err => {
+            document.getElementById('upload_progress').style.display = 'none';
+            alert("Upload failed: " + err);
+        });
+    });
+
+    // --- Voice & Streaming Logic ---
+    const chatForm = document.getElementById('chat_form');
+    const userInput = document.getElementById('user_input');
+    const chatHistory = document.getElementById('chat_history');
+    const chatStatus = document.getElementById('chat_status');
+    const micBtn = document.getElementById('mic_btn');
+
+    // Speech-to-Text Setup
+    let recognition;
+    let isRecording = false;
+    if ('webkitSpeechRecognition' in window) {
+        recognition = new webkitSpeechRecognition();
+        recognition.continuous = false;
+        recognition.interimResults = true;
+        recognition.lang = 'en-US'; // Can be expanded dynamically
+        
+        recognition.onstart = function() {
+            isRecording = true;
+            micBtn.style.backgroundColor = '#ef4444';
+            micBtn.style.color = 'white';
+            chatStatus.innerText = "🎤 Listening...";
+        };
+        
+        recognition.onresult = function(event) {
+            let transcript = '';
+            for (let i = event.resultIndex; i < event.results.length; ++i) {
+                transcript += event.results[i][0].transcript;
+            }
+            userInput.value = transcript;
+        };
+        
+        recognition.onerror = function(event) {
+            console.error(event.error);
+            chatStatus.innerText = "Error: " + event.error;
+            stopRecording();
+        };
+        
+        recognition.onend = function() {
+            stopRecording();
+            if (userInput.value.trim().length > 0) {
+                // Auto-submit after voice
+                chatForm.dispatchEvent(new Event('submit'));
+            }
+        };
+    } else {
+        micBtn.style.display = 'none'; // Not supported
+    }
+
+    function stopRecording() {
+        isRecording = false;
+        micBtn.style.backgroundColor = '#f3f4f6';
+        micBtn.style.color = '#4b5563';
+        chatStatus.innerText = "";
+    }
+
+    micBtn.addEventListener('click', () => {
+        if (isRecording) {
+            recognition.stop();
+        } else {
+            userInput.value = '';
+            recognition.start();
+        }
+    });
+
+    // SSE Streaming
+    chatForm.addEventListener('submit', function(e) {
+        e.preventDefault();
+        const text = userInput.value.trim();
+        if (!text) return;
+        
+        // Append user bubble
+        const userDiv = document.createElement('div');
+        userDiv.className = 'query-bubble fade-in';
+        userDiv.innerHTML = `<strong>You:</strong><p>${text}</p>`;
+        chatHistory.appendChild(userDiv);
+        userInput.value = '';
+        
+        // Append AI bubble skeleton
+        const aiDiv = document.createElement('div');
+        aiDiv.className = 'response-bubble fade-in';
+        aiDiv.innerHTML = `
+            <h2>Medical Response</h2>
+            <div class="response-content" style="white-space: pre-wrap;"></div>
+            <div class="chat-actions" style="margin-top: 15px; display: flex; gap: 10px; display: none;">
+                <button type="button" class="btn-copy" style="font-size: 0.8rem; padding: 4px 8px; border-radius: 4px; cursor: pointer; border: 1px solid #d1d5db; background: transparent;">Copy</button>
+            </div>
+        `;
+        chatHistory.appendChild(aiDiv);
+        const aiContent = aiDiv.querySelector('.response-content');
+        const chatActions = aiDiv.querySelector('.chat-actions');
+        const btnCopy = aiDiv.querySelector('.btn-copy');
+        
+        btnCopy.addEventListener('click', () => {
+            navigator.clipboard.writeText(fullText);
+            btnCopy.innerText = "Copied!";
+            setTimeout(() => btnCopy.innerText = "Copy", 2000);
+        });
+        
+        // Start EventSource
+        chatStatus.innerText = "🧠 Connecting...";
+        let streamUrl = '/chat_stream?user_input=' + encodeURIComponent(text);
+        {% if current_chat %}
+        streamUrl += '&session_id={{ current_chat.id }}';
+        {% endif %}
+        const evtSource = new EventSource(streamUrl);
+        
+        let fullText = "";
+        
+        evtSource.onmessage = function(event) {
+            const data = JSON.parse(event.data);
+            
+            if (data.status === 'SEARCHING') {
+                chatStatus.innerText = "📚 Searching Knowledge Base...";
+            } else if (data.status === 'GENERATING') {
+                chatStatus.innerText = "🤖 Generating Answer...";
+            } else if (data.chunk) {
+                fullText += data.chunk;
+                aiContent.innerText = fullText;
+            } else if (data.sources) {
+                const srcDiv = document.createElement('div');
+                srcDiv.className = 'sources';
+                srcDiv.style = "margin-top: 15px; font-size: 0.85rem; color: #6b7280; padding-top: 10px; border-top: 1px dashed #e5e7eb;";
+                srcDiv.innerHTML = `<strong>Context Sources:</strong><ul style="margin-top: 5px; padding-left: 20px;"></ul>`;
+                const ul = srcDiv.querySelector('ul');
+                data.sources.forEach(s => {
+                    const li = document.createElement('li');
+                    li.innerText = `${s.source} ${s.page ? '(Page '+s.page+')' : ''}`;
+                    ul.appendChild(li);
+                });
+                aiDiv.insertBefore(srcDiv, chatActions);
+            } else if (data.status === 'DONE') {
+                chatStatus.innerText = "🔊 Generating Audio...";
+                evtSource.close();
+                chatActions.style.display = 'flex'; // Show copy button
+                
+                // Fetch TTS Audio
+                fetch('/generate_tts', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({text: fullText, lang: 'en'})
+                })
+                .then(r => r.json())
+                .then(ttsData => {
+                    chatStatus.innerText = "";
+                    if(ttsData.audio_url) {
+                        const audio = document.createElement('audio');
+                        audio.controls = true;
+                        audio.src = ttsData.audio_url;
+                        audio.style = "margin-top: 15px; width: 100%; border-radius: 8px;";
+                        audio.autoplay = true; // Auto-play response
+                        aiDiv.insertBefore(audio, chatActions);
+                    }
+                });
+            } else if (data.error) {
+                chatStatus.innerText = "❌ Error occurred.";
+                aiContent.innerText += "\n[Error: " + data.error + "]";
+                evtSource.close();
+            }
+        };
+        
+        evtSource.onerror = function() {
+            chatStatus.innerText = "Network Error.";
+            evtSource.close();
+        };
+    });
+</script>
+{% endblock %}

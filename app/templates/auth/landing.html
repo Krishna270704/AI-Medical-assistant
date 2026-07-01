@@ -1,0 +1,15 @@
+{% extends 'layout.html' %}
+{% block title %}Landing Page{% endblock %}
+
+{% block content %}
+<div class="glass-panel" style="text-align: center; padding: 60px 20px;">
+    <h1 style="font-size: 3rem; margin-bottom: 20px; text-shadow: 0 2px 4px rgba(0,0,0,0.3);">Your Personal AI Medical Advisor</h1>
+    <p class="lead" style="font-size: 1.2rem; max-width: 600px; margin: 0 auto 40px auto;">
+        Upload medical reports, ask health questions using your voice in any language, and manage your appointments securely in one place.
+    </p>
+    <div style="display: flex; justify-content: center; gap: 20px;">
+        <a href="{{ url_for('auth.signup') }}" class="btn-primary" style="font-size: 1.2rem; padding: 15px 30px;">Get Started for Free</a>
+        <a href="{{ url_for('auth.login') }}" class="btn-primary" style="background: rgba(255,255,255,0.1); font-size: 1.2rem; padding: 15px 30px;">Login</a>
+    </div>
+</div>
+{% endblock %}

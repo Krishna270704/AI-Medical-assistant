@@ -1,0 +1,91 @@
+{% extends "layout.html" %}
+{% block title %}Dashboard{% endblock %}
+
+{% block content %}
+<div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 30px;">
+    <h2>Welcome, {{ current_user.name }}</h2>
+    <a href="{{ url_for('dashboard.new_chat') }}" class="btn-primary" style="text-decoration: none;">+ New Consultation</a>
+</div>
+
+<div class="dashboard-grid" style="display: grid; grid-template-columns: 2fr 1fr; gap: 20px;">
+    
+    <!-- Left Column: Chats & Reports -->
+    <div>
+        <div class="glass-panel" style="padding: 20px; margin-bottom: 20px;">
+            <h3 style="margin-bottom: 15px; border-bottom: 1px solid rgba(255,255,255,0.2); padding-bottom: 10px;">Recent Consultations</h3>
+            {% if chats %}
+                <ul style="list-style: none; padding: 0;">
+                {% for chat in chats %}
+                    <li style="margin-bottom: 10px; padding: 10px; background: rgba(255,255,255,0.05); border-radius: 8px; display: flex; justify-content: space-between;">
+                        <div>
+                            <strong><a href="{{ url_for('main.chat_view', session_id=chat.id) }}" style="color: #60a5fa; text-decoration: none;">{{ chat.title }}</a></strong>
+                            <p style="font-size: 0.8rem; color: #9ca3af; margin-top: 5px;">{{ chat.created_at.strftime('%b %d, %Y - %H:%M') }}</p>
+                        </div>
+                    </li>
+                {% endfor %}
+                </ul>
+            {% else %}
+                <p style="color: #9ca3af;">No recent consultations. Start a new one!</p>
+            {% endif %}
+        </div>
+
+        <div class="glass-panel" style="padding: 20px;">
+            <h3 style="margin-bottom: 15px; border-bottom: 1px solid rgba(255,255,255,0.2); padding-bottom: 10px;">Medical Reports</h3>
+            {% if reports %}
+                <ul style="list-style: none; padding: 0;">
+                {% for report in reports %}
+                    <li style="margin-bottom: 10px; padding: 10px; background: rgba(255,255,255,0.05); border-radius: 8px; display: flex; justify-content: space-between; align-items: center;">
+                        <div>
+                            <strong>{{ report.filename }}</strong>
+                            {% if report.urgency_level %}
+                            <span class="badge" style="background: #ef4444; margin-left: 10px;">{{ report.urgency_level }}</span>
+                            {% endif %}
+                            <p style="font-size: 0.8rem; color: #9ca3af; margin-top: 5px;">Uploaded: {{ report.uploaded_at.strftime('%b %d, %Y') }}</p>
+                        </div>
+                    </li>
+                {% endfor %}
+                </ul>
+            {% else %}
+                <p style="color: #9ca3af;">No reports uploaded yet.</p>
+            {% endif %}
+        </div>
+    </div>
+    
+    <!-- Right Column: Appointments & Reminders -->
+    <div>
+        <div class="glass-panel" style="padding: 20px; margin-bottom: 20px;">
+            <h3 style="margin-bottom: 15px; border-bottom: 1px solid rgba(255,255,255,0.2); padding-bottom: 10px;">Upcoming Appointments</h3>
+            {% if appointments %}
+                <ul style="list-style: none; padding: 0;">
+                {% for appt in appointments %}
+                    <li style="margin-bottom: 10px; padding: 10px; background: rgba(255,255,255,0.05); border-radius: 8px; border-left: 4px solid #3b82f6;">
+                        <strong>Dr. {{ appt.doctor_name }}</strong> <small>({{ appt.specialty }})</small>
+                        <p style="font-size: 0.85rem; margin-top: 5px;">📅 {{ appt.appointment_date.strftime('%b %d, %Y - %I:%M %p') }}</p>
+                    </li>
+                {% endfor %}
+                </ul>
+            {% else %}
+                <p style="color: #9ca3af;">No upcoming appointments.</p>
+            {% endif %}
+            <button class="btn-primary" style="margin-top: 10px; width: 100%; font-size: 0.85rem; padding: 6px;">+ Add Appointment</button>
+        </div>
+
+        <div class="glass-panel" style="padding: 20px;">
+            <h3 style="margin-bottom: 15px; border-bottom: 1px solid rgba(255,255,255,0.2); padding-bottom: 10px;">Medication Reminders</h3>
+            {% if reminders %}
+                <ul style="list-style: none; padding: 0;">
+                {% for rem in reminders %}
+                    <li style="margin-bottom: 10px; padding: 10px; background: rgba(255,255,255,0.05); border-radius: 8px; border-left: 4px solid #10b981;">
+                        <strong>{{ rem.medicine_name }}</strong> <small>({{ rem.dosage }})</small>
+                        <p style="font-size: 0.85rem; margin-top: 5px;">⏰ {{ rem.time }} - {{ rem.frequency }}</p>
+                    </li>
+                {% endfor %}
+                </ul>
+            {% else %}
+                <p style="color: #9ca3af;">No active reminders.</p>
+            {% endif %}
+            <button class="btn-primary" style="margin-top: 10px; width: 100%; font-size: 0.85rem; padding: 6px; background: #10b981;">+ Add Reminder</button>
+        </div>
+    </div>
+</div>
+{% endblock %}

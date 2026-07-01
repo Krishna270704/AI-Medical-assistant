@@ -1,0 +1,27 @@
+{% extends "layout.html" %}
+{% block title %}Profile Settings{% endblock %}
+
+{% block content %}
+<div class="glass-panel" style="max-width: 600px; margin: 0 auto; padding: 30px;">
+    <h2 style="margin-bottom: 20px;">Profile Settings</h2>
+    <form method="POST" action="">
+        <div class="form-group" style="margin-bottom: 15px;">
+            <label>Name</label>
+            <input type="text" name="name" value="{{ current_user.name }}" class="form-control" style="width: 100%; padding: 10px; border-radius: 8px; border: 1px solid rgba(255,255,255,0.2); background: rgba(255,255,255,0.1); color: white;">
+        </div>
+        <div class="form-group" style="margin-bottom: 15px;">
+            <label>Email (Cannot be changed)</label>
+            <input type="email" value="{{ current_user.email }}" class="form-control" disabled style="width: 100%; padding: 10px; border-radius: 8px; border: 1px solid rgba(255,255,255,0.1); background: rgba(255,255,255,0.05); color: #9ca3af;">
+        </div>
+        <div class="form-group" style="margin-bottom: 25px;">
+            <label>Preferred Language</label>
+            <select name="language" class="form-control" style="width: 100%; padding: 10px; border-radius: 8px; border: 1px solid rgba(255,255,255,0.2); background: rgba(0,0,0,0.5); color: white;">
+                <option value="en" {% if current_user.preferred_language == 'en' %}selected{% endif %}>English</option>
+                <option value="hi" {% if current_user.preferred_language == 'hi' %}selected{% endif %}>Hindi</option>
+                <option value="hinglish" {% if current_user.preferred_language == 'hinglish' %}selected{% endif %}>Hinglish</option>
+            </select>
+        </div>
+        <button type="submit" class="btn-primary" style="width: 100%;">Save Changes</button>
+    </form>
+</div>
+{% endblock %}
