@@ -31,7 +31,7 @@ EXPOSE 5000
 
 # Health check
 HEALTHCHECK --interval=30s --timeout=5s --start-period=10s --retries=3 \
-  CMD curl -f http://localhost:5000/health || exit 1
+  CMD curl -f http://localhost:${PORT:-5000}/health || exit 1
 
 # Start the application using Gunicorn with gevent for SSE streaming support
-CMD ["gunicorn", "--worker-class", "gevent", "--workers", "1", "--bind", "0.0.0.0:5000", "run:app"]
+CMD ["gunicorn", "-c", "gunicorn.conf.py", "run:app"]
