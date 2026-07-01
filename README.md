@@ -401,3 +401,9 @@ https://github.com/Krishna270704/AI-Medical-assistant.git
 4. Add all the environment variables listed in .env.example in the Railway dashboard.
 5. Railway will automatically detect the Procfile and use Gunicorn to serve the app.
 6. The PORT will be automatically injected by Railway.
+
+
+## ?? Live Demo
+
+web-production-0db8.up.railway.app
+
